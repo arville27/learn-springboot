@@ -2,11 +2,14 @@ package net.arville.service;
 
 import net.arville.exception.ItemNotFoundException;
 import net.arville.model.Book;
+import net.arville.model.BookActivity;
+import net.arville.repository.BookActivityRepository;
 import net.arville.repository.BookRepository;
 import net.arville.util.UpdateResponse;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -15,9 +18,11 @@ import java.util.Optional;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final BookActivityRepository bookActivityRepository;
 
-    public BookService(BookRepository bookRepository) {
+    public BookService(BookRepository bookRepository, BookActivityRepository bookActivityRepository) {
         this.bookRepository = bookRepository;
+        this.bookActivityRepository = bookActivityRepository;
     }
 
     public List<Book> getAllBook() {
@@ -29,6 +34,7 @@ public class BookService {
     }
 
     public Book addBook(Book book) {
+        bookActivityRepository.save(new BookActivity("INSERT", new Book(), book));
         return bookRepository.save(book);
     }
 
@@ -76,7 +82,9 @@ public class BookService {
             updatedBook.setPrice(newPrice);
         }
 
-        return new UpdateResponse(oldBook, updatedBook);
+        bookActivityRepository.save(new BookActivity("UPDATE", oldBook, updatedBook));
+
+        return new UpdateResponse(oldBook, updatedBook, LocalDateTime.now());
     }
 
     public Book deleteBookById(Long id) {

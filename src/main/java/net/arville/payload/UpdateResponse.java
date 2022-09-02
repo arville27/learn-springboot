@@ -1,4 +1,4 @@
-package net.arville.util;
+package net.arville.payload;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import net.arville.model.Book;

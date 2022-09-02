@@ -1,8 +1,11 @@
 package net.arville.controller;
 
+import net.arville.exception.ItemNotFoundException;
+import net.arville.payload.*;
 import net.arville.service.BookService;
 import net.arville.model.Book;
-import net.arville.util.UpdateResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,38 +21,87 @@ public class BookController {
     }
 
     @GetMapping()
-    public List<Book> getBook(
+    public ResponseEntity<ResponseBodyHandler> getBook(
             @RequestParam(name = "name", required = false) String bookName,
             @RequestParam(name = "author", required = false) String author
     ) {
-        if (author == null && bookName != null) {
-            return bookService.getBookByBookName(bookName);
-        } else if (author != null && bookName == null) {
-            return bookService.getBookByAuthor(author);
-        } else if (author != null && bookName != null) {
-            return bookService.getBookByBookNameAndAuthor(bookName, author);
+        ResponseBodyHandler responseBody;
+
+        try {
+            List<Book> books;
+
+            if (author == null && bookName != null) {
+                books = bookService.getBookByBookName(bookName);
+            } else if (author != null && bookName == null) {
+                books = bookService.getBookByAuthor(author);
+            } else if (author != null && bookName != null) {
+                books = bookService.getBookByBookNameAndAuthor(bookName, author);
+            } else {
+                books = bookService.getAllBook();
+            }
+
+            responseBody = ErrorCode.SUCCESS.Response(books);
+        } catch (ItemNotFoundException e) {
+            responseBody = ErrorCode.NO_RESULT_FOUND.Response(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
         }
-        return bookService.getAllBook();
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }
 
     @GetMapping("/{id}")
-    public Book getBookById(@PathVariable Long id) {
-        return bookService.getBookById(id);
+    public ResponseEntity<ResponseBodyHandler> getBookById(@PathVariable Long id) {
+        ResponseBodyHandler responseBody;
+
+        try {
+            Book book = bookService.getBookById(id);
+            responseBody = ErrorCode.SUCCESS.Response(book);
+        } catch (ItemNotFoundException e) {
+            responseBody = ErrorCode.NO_RESULT_FOUND.Response(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }
 
     @PostMapping()
-    public Book addBook(@RequestBody Book book) {
-        return bookService.addBook(book);
+    public ResponseEntity<ResponseBodyHandler> addBook(@RequestBody Book book) {
+        ResponseBodyHandler responseBody;
+
+        Book newBook = bookService.addBook(book);
+        responseBody = ErrorCode.SUCCESS.Response(newBook);
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }
 
     @PutMapping("/{id}")
-    public UpdateResponse updateBook(@PathVariable Long id, @RequestBody Book book) {
-        return bookService.updateBook(id, book);
+    public ResponseEntity<ResponseBodyHandler> updateBook(@PathVariable Long id, @RequestBody Book book) {
+        ResponseBodyHandler responseBody;
+
+        try {
+            UpdateResponse updatedBookResponse = bookService.updateBook(id, book);
+            responseBody = ErrorCode.SUCCESS.Response(updatedBookResponse);
+        } catch (ItemNotFoundException e) {
+            responseBody = ErrorCode.NO_RESULT_FOUND.Response(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }
 
     @DeleteMapping("/{id}")
-    public Book deleteBook(@PathVariable Long id) {
-        return bookService.deleteBookById(id);
+    public ResponseEntity<ResponseBodyHandler> deleteBook(@PathVariable Long id) {
+        ResponseBodyHandler responseBody;
+
+        try {
+            Book deletedBook = bookService.deleteBookById(id);
+            responseBody = ErrorCode.SUCCESS.Response(deletedBook);
+        } catch (ItemNotFoundException e) {
+            responseBody = ErrorCode.NO_RESULT_FOUND.Response(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }
 
 }

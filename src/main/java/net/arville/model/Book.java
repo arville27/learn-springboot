@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "daniel_book_store")
-public class Book implements Cloneable {
+public class Book {
     @Id
     @SequenceGenerator(name = "book_id_seq", sequenceName = "book_id_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "book_id_seq")
@@ -71,11 +71,6 @@ public class Book implements Cloneable {
         return price;
     }
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        return super.clone();
-    }
-
     public void setPrice(Integer price) {
         this.price = price;
     }
@@ -94,6 +89,14 @@ public class Book implements Cloneable {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    //    Copy constructor for activity book log
+    public Book(Book original) {
+        this.id = original.id;
+        this.bookName = new String(original.getBookName());
+        this.author = new String(original.getAuthor());
+        this.price = original.getPrice();
     }
 
     public Book() {

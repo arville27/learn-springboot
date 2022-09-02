@@ -5,7 +5,7 @@ import net.arville.model.Book;
 import net.arville.model.BookActivity;
 import net.arville.repository.BookActivityRepository;
 import net.arville.repository.BookRepository;
-import net.arville.util.UpdateResponse;
+import net.arville.payload.UpdateResponse;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -30,7 +30,11 @@ public class BookService {
     }
 
     public List<Book> getBookByBookName(String bookName) {
-        return bookRepository.findBookByBookNameContaining(bookName);
+        var books = bookRepository.findBookByBookNameContaining(bookName);
+        if (books.size() == 0) {
+            throw new ItemNotFoundException();
+        }
+        return books;
     }
 
     public Book addBook(Book book) {
@@ -51,7 +55,7 @@ public class BookService {
         if (book.isPresent()) {
             return book.get();
         } else {
-            throw new ItemNotFoundException("Book is not exist");
+            throw new ItemNotFoundException();
         }
     }
 
@@ -62,29 +66,36 @@ public class BookService {
         Integer newPrice = newBookData.getPrice();
 
         Book updatedBook = this.getBookById(id);
-        Book oldBook;
 
-        try {
-            oldBook = (Book) updatedBook.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
+        Book beforeBook, afterBook;
+        beforeBook = new Book(updatedBook);
+        afterBook = new Book(updatedBook);
+
+        if (newName != null && newName.length() > 0) {
+            if (!Objects.equals(newName, updatedBook.getBookName())) {
+                updatedBook.setBookName(newName);
+                afterBook.setBookName(newName);
+            } else {
+                afterBook.setBookName("No Change");
+            }
         }
 
-        if (newName != null && newName.length() > 0 && !Objects.equals(newName, updatedBook.getBookName())) {
-            updatedBook.setBookName(newName);
-        }
-
-        if (newAuthor != null && newAuthor.length() > 0 && !Objects.equals(newAuthor, updatedBook.getAuthor())) {
-            updatedBook.setAuthor(newAuthor);
+        if (newAuthor != null && newAuthor.length() > 0) {
+            if (!Objects.equals(newAuthor, updatedBook.getAuthor())) {
+                updatedBook.setAuthor(newAuthor);
+                afterBook.setAuthor(newAuthor);
+            } else {
+                afterBook.setAuthor("No Change");
+            }
         }
 
         if (newPrice != null && !Objects.equals(newPrice, updatedBook.getPrice())) {
             updatedBook.setPrice(newPrice);
         }
 
-        bookActivityRepository.save(new BookActivity("UPDATE", oldBook, updatedBook));
+        bookActivityRepository.save(new BookActivity("UPDATE", beforeBook, afterBook));
 
-        return new UpdateResponse(oldBook, updatedBook, LocalDateTime.now());
+        return new UpdateResponse(beforeBook, afterBook, LocalDateTime.now());
     }
 
     public Book deleteBookById(Long id) {

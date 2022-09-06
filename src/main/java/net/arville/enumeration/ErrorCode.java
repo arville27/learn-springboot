@@ -44,8 +44,8 @@ public enum ErrorCode {
         return new ResponseBodyHandler(outputSchema, errorSchema);
     }
 
-    public ResponseBodyHandler RawDataResponse(PaginationResponse paginationResponse) {
+    public ResponseBodyHandler RawDataResponse(Object rawData) {
         ErrorSchema errorSchema = new ErrorSchema(this);
-        return new ResponseBodyHandler(paginationResponse, errorSchema);
+        return new ResponseBodyHandler(rawData, errorSchema);
     }
 }

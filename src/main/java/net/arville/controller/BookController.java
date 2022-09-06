@@ -2,11 +2,15 @@ package net.arville.controller;
 
 import net.arville.enumeration.ErrorCode;
 import net.arville.enumeration.SpecificationOperation;
+import net.arville.exception.IllegalPageNumber;
 import net.arville.exception.ItemNotFoundException;
 import net.arville.payload.*;
 import net.arville.service.BookService;
 import net.arville.model.Book;
+import net.arville.util.PageableBuilder;
 import net.arville.util.SpecificationBuilder;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.List;
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/api/book")
@@ -32,7 +36,10 @@ public class BookController {
             @RequestParam(name = "name", required = false) String bookName,
             @RequestParam(name = "author", required = false) String author,
             @RequestParam(name = "start-date", required = false) String startDateStr,
-            @RequestParam(name = "end-date", required = false) String endDateStr
+            @RequestParam(name = "end-date", required = false) String endDateStr,
+            @RequestParam(name = "sort-type", required = false) String sortType,
+            @RequestParam(name = "sort-by", required = false) String sortField,
+            @RequestParam(name = "page", required = false) Integer pageNumber
     ) {
         ResponseBodyHandler responseBody;
         LocalDateTime startDate, endDate;
@@ -41,6 +48,7 @@ public class BookController {
         try {
             SpecificationBuilder<Book> bookSpecBuilder = new SpecificationBuilder<>();
 
+            // Attribute filtering
             if (bookName != null) {
                 bookSpecBuilder.with("bookName", SpecificationOperation.LIKE, bookName);
             }
@@ -59,14 +67,39 @@ public class BookController {
                 bookSpecBuilder.with("createdAt", SpecificationOperation.LESS_THAN_OR_EQUAL, endDate);
             }
 
-            List<Book> books = bookService.getAllBookBy(bookSpecBuilder.build());
+            // Pagination option
+            PageableBuilder pageableBuilder = new PageableBuilder();
+            if (sortType != null) {
+                switch (sortType) {
+                    case "asc":
+                        pageableBuilder.setSortType(Sort.Direction.ASC);
+                    case "desc":
+                        pageableBuilder.setSortType(Sort.Direction.DESC);
+                }
+            }
 
-            responseBody = ErrorCode.SUCCESS.Response(books);
+            if (sortField != null) {
+                pageableBuilder.addSortField(Arrays.asList(sortField.split(",")));
+            }
+
+            if (pageNumber != null) {
+                pageableBuilder.setPageNumber(pageNumber);
+            }
+
+            PaginationResponse books = bookService.getAllBookBy(bookSpecBuilder.build(), pageableBuilder.build());
+
+            responseBody = ErrorCode.SUCCESS.RawDataResponse(books);
         } catch (ItemNotFoundException e) {
             responseBody = ErrorCode.NO_RESULT_FOUND.Response(null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
         } catch (DateTimeParseException e) {
             responseBody = ErrorCode.INVALID_DATE_FILTER.Response(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
+        } catch (PropertyReferenceException e) {
+            responseBody = ErrorCode.INVALID_SORT_PROPERTY.Response(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
+        } catch (IllegalPageNumber e) {
+            responseBody = ErrorCode.INVALID_PAGINATION_PAGE_NUM.Response(null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
         }
 

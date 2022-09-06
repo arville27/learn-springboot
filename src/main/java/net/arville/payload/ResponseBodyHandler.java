@@ -3,14 +3,14 @@ package net.arville.payload;
 public class ResponseBodyHandler {
 
     private ErrorSchema errorSchema;
-    private OutputSchema outputSchema;
+    private Object outputSchema;
 
 
-    public OutputSchema getOutputSchema() {
+    public Object getOutputSchema() {
         return outputSchema;
     }
 
-    public void setOutputSchema(OutputSchema outputSchema) {
+    public void setOutputSchema(Object outputSchema) {
         this.outputSchema = outputSchema;
     }
 
@@ -22,7 +22,7 @@ public class ResponseBodyHandler {
         this.errorSchema = errorSchema;
     }
 
-    public ResponseBodyHandler(OutputSchema outputSchema, ErrorSchema errorSchema) {
+    public ResponseBodyHandler(Object outputSchema, ErrorSchema errorSchema) {
         this.outputSchema = outputSchema;
         this.errorSchema = errorSchema;
     }

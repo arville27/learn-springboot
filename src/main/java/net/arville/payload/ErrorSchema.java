@@ -1,5 +1,7 @@
 package net.arville.payload;
 
+import net.arville.enumeration.ErrorCode;
+
 import java.util.HashMap;
 
 public class ErrorSchema {

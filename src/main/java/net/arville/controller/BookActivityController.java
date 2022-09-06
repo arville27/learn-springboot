@@ -1,5 +1,6 @@
 package net.arville.controller;
 
+import net.arville.enumeration.ErrorCode;
 import net.arville.payload.*;
 import net.arville.service.BookActivityService;
 import org.springframework.http.HttpStatus;

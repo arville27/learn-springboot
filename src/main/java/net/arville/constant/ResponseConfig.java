@@ -1,4 +1,4 @@
-package net.arville.util;
+package net.arville.constant;
 
 public final class ResponseConfig {
     public static final String RESPONSE_MSG_LOCALE_DEFAULT = "indonesian";

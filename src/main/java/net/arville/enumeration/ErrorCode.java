@@ -1,6 +1,9 @@
-package net.arville.payload;
+package net.arville.enumeration;
 
-import net.arville.util.ResponseConfig;
+import net.arville.constant.ResponseConfig;
+import net.arville.payload.ErrorSchema;
+import net.arville.payload.OutputSchema;
+import net.arville.payload.ResponseBodyHandler;
 
 public enum ErrorCode {
     SUCCESS("APP-00-000", "Berhasil", "Success"),

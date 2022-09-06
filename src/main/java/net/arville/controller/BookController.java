@@ -1,14 +1,20 @@
 package net.arville.controller;
 
 import net.arville.enumeration.ErrorCode;
+import net.arville.enumeration.SpecificationOperation;
 import net.arville.exception.ItemNotFoundException;
 import net.arville.payload.*;
 import net.arville.service.BookService;
 import net.arville.model.Book;
+import net.arville.util.SpecificationBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @RestController
@@ -24,27 +30,44 @@ public class BookController {
     @GetMapping()
     public ResponseEntity<ResponseBodyHandler> getBook(
             @RequestParam(name = "name", required = false) String bookName,
-            @RequestParam(name = "author", required = false) String author
+            @RequestParam(name = "author", required = false) String author,
+            @RequestParam(name = "start-date", required = false) String startDateStr,
+            @RequestParam(name = "end-date", required = false) String endDateStr
     ) {
         ResponseBodyHandler responseBody;
+        LocalDateTime startDate, endDate;
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         try {
-            List<Book> books;
+            SpecificationBuilder<Book> bookSpecBuilder = new SpecificationBuilder<>();
 
-            if (author == null && bookName != null) {
-                books = bookService.getBookByBookName(bookName);
-            } else if (author != null && bookName == null) {
-                books = bookService.getBookByAuthor(author);
-            } else if (author != null && bookName != null) {
-                books = bookService.getBookByBookNameAndAuthor(bookName, author);
-            } else {
-                books = bookService.getAllBook();
+            if (bookName != null) {
+                bookSpecBuilder.with("bookName", SpecificationOperation.LIKE, bookName);
             }
+
+            if (author != null) {
+                bookSpecBuilder.with("author", SpecificationOperation.LIKE, author);
+            }
+
+            if (startDateStr != null) {
+                startDate = LocalDate.parse(startDateStr, dateFormat).atStartOfDay();
+                bookSpecBuilder.with("createdAt", SpecificationOperation.GREATER_THAN_OR_EQUAL, startDate);
+            }
+
+            if (endDateStr != null) {
+                endDate = LocalDate.parse(endDateStr, dateFormat).atStartOfDay();
+                bookSpecBuilder.with("createdAt", SpecificationOperation.LESS_THAN_OR_EQUAL, endDate);
+            }
+
+            List<Book> books = bookService.getAllBookBy(bookSpecBuilder.build());
 
             responseBody = ErrorCode.SUCCESS.Response(books);
         } catch (ItemNotFoundException e) {
             responseBody = ErrorCode.NO_RESULT_FOUND.Response(null);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseBody);
+        } catch (DateTimeParseException e) {
+            responseBody = ErrorCode.INVALID_DATE_FILTER.Response(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseBody);
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(responseBody);

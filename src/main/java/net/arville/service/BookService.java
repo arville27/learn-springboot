@@ -6,6 +6,7 @@ import net.arville.model.BookActivity;
 import net.arville.repository.BookActivityRepository;
 import net.arville.repository.BookRepository;
 import net.arville.payload.UpdateResponse;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -25,29 +26,17 @@ public class BookService {
         this.bookActivityRepository = bookActivityRepository;
     }
 
-    public List<Book> getAllBook() {
-        return bookRepository.findAll();
-    }
-
-    public List<Book> getBookByBookName(String bookName) {
-        var books = bookRepository.findBookByBookNameContaining(bookName);
-        if (books.size() == 0) {
-            throw new ItemNotFoundException();
-        }
-        return books;
-    }
-
     public Book addBook(Book book) {
         bookActivityRepository.save(new BookActivity("INSERT", new Book(), book));
         return bookRepository.save(book);
     }
 
-    public List<Book> getBookByAuthor(String author) {
-        return bookRepository.findBookByAuthorContaining(author);
-    }
-
-    public List<Book> getBookByBookNameAndAuthor(String bookName, String author) {
-        return bookRepository.findBookByAuthorContainingAndBookNameContaining(author, bookName);
+    public List<Book> getAllBookBy(Specification<Book> specsCriteria) {
+        List<Book> books = bookRepository.findAll(specsCriteria);
+        if (books.size() == 0) {
+            throw new ItemNotFoundException();
+        }
+        return books;
     }
 
     public Book getBookById(Long id) {

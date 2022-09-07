@@ -11,9 +11,9 @@
     </parent>
 
     <groupId>net.arville</groupId>
-    <artifactId>learnspring</artifactId>
+    <artifactId>bookservices</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>learnspring</name>
+    <name>bookservices</name>
     <description>Task 1</description>
 
     <properties>
